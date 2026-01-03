@@ -392,16 +392,15 @@ TOOLS = [
                 "parcelas": {
                     "type": "array",
                     "items": {"type": "object"},
-                    "description": "Lista de parcelas com valores de desconto",
+                    "description": "Lista de parcelas com valores de desconto. Cada parcela DEVE incluir: parcela (ID), valorDesconto, descontoMora, descontoJuros, descontoMulta, descontoOutros, descontoPrincipal, descontoPermanencia",
                 },
-                "parcelamentos": {
-                    "type": "array",
-                    "items": {"type": "object"},
-                    "description": "Plano de parcelamento com datas e valores",
+                "parcelamento": {
+                    "type": "object",
+                    "description": "Objeto (singular) do plano de parcelamento com datas e valores. Deve incluir os campos retornados pela simulação (valorTotal, valorPrincipal, valorJuros, dataVencimento, numeroParcelas, etc.)",
                 },
                 "observacao": {"type": "string", "description": "Observações sobre o acordo"},
             },
-            "required": ["cliente", "negociacao", "meio_pagamento", "parcelas", "parcelamentos"],
+            "required": ["cliente", "negociacao", "meio_pagamento", "parcelas", "parcelamento"],
         },
     ),
     Tool(
@@ -882,7 +881,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
                 negociacao=arguments["negociacao"],
                 meio_pagamento=arguments["meio_pagamento"],
                 parcelas=arguments["parcelas"],
-                parcelamentos=arguments["parcelamentos"],
+                parcelamento=arguments["parcelamento"],
                 observacao=arguments.get("observacao"),
             )
         elif name == "activate_agreement":

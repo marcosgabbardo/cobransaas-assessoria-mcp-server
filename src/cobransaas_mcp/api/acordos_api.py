@@ -133,7 +133,7 @@ async def efetivar_acordo(
     negociacao: str,
     meio_pagamento: str,
     parcelas: list[dict[str, Any]],
-    parcelamentos: list[dict[str, Any]],
+    parcelamento: dict[str, Any],
     observacao: str | None = None,
     pagamentos: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -143,8 +143,8 @@ async def efetivar_acordo(
         cliente: Client ID.
         negociacao: Negotiation modality ID.
         meio_pagamento: Payment method ID.
-        parcelas: List of installments with discount values.
-        parcelamentos: Payment plan with dates and values.
+        parcelas: List of installments with discount values (must include valorDesconto).
+        parcelamento: Payment plan object with dates and values (singular, not array).
         observacao: Optional notes about the agreement.
         pagamentos: Optional list of payments already received.
 
@@ -157,7 +157,7 @@ async def efetivar_acordo(
         "negociacao": negociacao,
         "meioPagamento": meio_pagamento,
         "parcelas": parcelas,
-        "parcelamentos": parcelamentos,
+        "parcelamento": parcelamento,
     }
 
     if observacao:
