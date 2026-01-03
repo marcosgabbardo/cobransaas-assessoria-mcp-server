@@ -158,7 +158,7 @@ TOOLS = [
     # ==========================================================================
     Tool(
         name="list_clients",
-        description="Lista os clientes distribuídos para a assessoria.",
+        description="Lista os clientes distribuídos para a assessoria. Por padrão retorna até 50 registros.",
         inputSchema={
             "type": "object",
             "properties": {
@@ -174,6 +174,10 @@ TOOLS = [
                 "selector": {
                     "type": "string",
                     "description": "Dados adicionais a incluir (telefones, emails, enderecos, referencias, informacoesAdicionais, marcadores)",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Número máximo de resultados (padrão: 50, máx: 100)",
                 },
             },
             "required": [],
@@ -789,6 +793,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
                 codigo=arguments.get("codigo"),
                 numero_contrato=arguments.get("numero_contrato"),
                 selector=arguments.get("selector"),
+                limit=arguments.get("limit"),
             )
         elif name == "get_client":
             result = await get_cliente(

@@ -13,6 +13,7 @@ async def list_clientes(
     cliente: str | None = None,
     numero_contrato: str | None = None,
     selector: str | None = None,
+    limit: int | None = None,
 ) -> list[dict[str, Any]]:
     """List clients distributed to the advisory.
 
@@ -25,6 +26,7 @@ async def list_clientes(
         numero_contrato: Filter by contract number.
         selector: Additional data to include (telefones, emails, enderecos,
                   referencias, informacoesAdicionais, marcadores).
+        limit: Maximum number of results to return (default: 50).
 
     Returns:
         List of client dictionaries.
@@ -48,7 +50,15 @@ async def list_clientes(
         params["selector"] = selector
         params["mode"] = "CONTINUABLE"
 
-    return await client.get_paginated("/clientes", params=params)
+    # Use page/size mode for better control
+    max_results = limit or 50
+    params["page"] = 0
+    params["size"] = min(max_results, 100)  # API max is usually 100
+
+    result = await client.get("/clientes", params=params)
+    if isinstance(result, list):
+        return result[:max_results]
+    return result
 
 
 async def get_cliente(
