@@ -152,12 +152,17 @@ async def efetivar_acordo(
         Created agreement details dictionary.
     """
     client = get_client()
+
+    # Remove 'parcelas' from parcelamento if present - the API calculates
+    # installment details automatically and rejects the request if included
+    parcelamento_clean = {k: v for k, v in parcelamento.items() if k != "parcelas"}
+
     data: dict[str, Any] = {
         "cliente": cliente,
         "negociacao": negociacao,
         "meioPagamento": meio_pagamento,
         "parcelas": parcelas,
-        "parcelamento": parcelamento,
+        "parcelamento": parcelamento_clean,
     }
 
     if observacao:
