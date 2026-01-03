@@ -68,10 +68,13 @@ pip install git+https://github.com/marcosgabbardo/cobransaas-assessoria-mcp-serv
 Crie um arquivo `.env` na raiz do projeto (ou configure as variáveis de ambiente):
 
 ```env
-# Host da API (obrigatório)
-COBRANSAAS_HOST=https://cliente.cobransaas.com.br
+# Host da API (obrigatório) - URL do tenant do CobranSaaS
+# Cada cliente/assessoria possui uma URL específica fornecida pelo CobranSaaS
+# Exemplos: https://empresa.cobransaas.com.br, https://assessoria.cobransaas.com.br
+COBRANSAAS_HOST=https://seu-tenant.cobransaas.com.br
 
 # OAuth2 Client Credentials (obrigatório)
+# Credenciais fornecidas pelo CobranSaaS para acesso à API
 COBRANSAAS_CLIENT_ID=seu_codigo
 COBRANSAAS_CLIENT_SECRET=seu_token
 
@@ -79,6 +82,8 @@ COBRANSAAS_CLIENT_SECRET=seu_token
 COBRANSAAS_TIMEOUT=30
 COBRANSAAS_MAX_RETRIES=3
 ```
+
+> **Importante**: A URL do host (`COBRANSAAS_HOST`) é específica para cada tenant/cliente do CobranSaaS. Entre em contato com o suporte do CobranSaaS para obter a URL correta do seu ambiente.
 
 ### Configuração no Claude Desktop
 
@@ -91,7 +96,7 @@ Adicione ao arquivo `claude_desktop_config.json`:
       "command": "python",
       "args": ["-m", "cobransaas_mcp"],
       "env": {
-        "COBRANSAAS_HOST": "https://cliente.cobransaas.com.br",
+        "COBRANSAAS_HOST": "https://seu-tenant.cobransaas.com.br",
         "COBRANSAAS_CLIENT_ID": "seu_codigo",
         "COBRANSAAS_CLIENT_SECRET": "seu_token"
       }
@@ -111,7 +116,7 @@ Adicione ao arquivo `.vscode/mcp.json`:
       "command": "python",
       "args": ["-m", "cobransaas_mcp"],
       "env": {
-        "COBRANSAAS_HOST": "https://cliente.cobransaas.com.br",
+        "COBRANSAAS_HOST": "https://seu-tenant.cobransaas.com.br",
         "COBRANSAAS_CLIENT_ID": "seu_codigo",
         "COBRANSAAS_CLIENT_SECRET": "seu_token"
       }
