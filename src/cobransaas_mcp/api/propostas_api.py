@@ -43,35 +43,64 @@ def _ensure_parcelamento_defaults(parcelamento: dict[str, Any]) -> dict[str, Any
     return result
 
 
+def _is_valid_parcela_divida(parcela: dict[str, Any]) -> bool:
+    """Check if a parcela dict represents a debt installment (has 'parcela' ID field).
+
+    The 'parcelas' inside parcelamentos should be debt installments with:
+    - 'parcela': ID of the original debt installment
+    - discount fields (valorDesconto, descontoMora, etc.)
+
+    NOT payment plan installments which have:
+    - 'numeroParcela': sequential number
+    - 'valorTotal', 'valorJuros', etc.
+    """
+    return "parcela" in parcela and parcela["parcela"] is not None
+
+
 def _process_parcelamentos(
     parcelamentos: list[dict[str, Any]],
     parcelas_base: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Process parcelamentos to ensure each has required fields.
 
-    For proposals, each parcelamento contains its own 'parcelas' array.
-    This function ensures all parcelas have the required discount fields.
+    For proposals, each parcelamento must contain 'parcelas' which are the
+    ORIGINAL DEBT INSTALLMENTS (with 'parcela' ID and discount fields),
+    NOT the payment plan installments.
+
+    If parcelamentos contain payment plan data instead of debt installments,
+    this function will use the top-level parcelas_base instead.
 
     Args:
         parcelamentos: List of parcelamento options.
-        parcelas_base: Optional base parcelas list to use if parcelamento
-                       doesn't have its own parcelas.
+        parcelas_base: Top-level parcelas list with debt installments.
     """
     processed = []
     for parcelamento in parcelamentos:
         # Add parcelamento-level defaults
         parcelamento_copy = _ensure_parcelamento_defaults(dict(parcelamento))
 
-        # If parcelamento doesn't have parcelas but we have a base list, use it
-        if "parcelas" not in parcelamento_copy or not parcelamento_copy["parcelas"]:
-            if parcelas_base:
-                parcelamento_copy["parcelas"] = [
-                    _ensure_parcela_defaults(p) for p in parcelas_base
-                ]
-        else:
-            # Process existing parcelas to add defaults
+        existing_parcelas = parcelamento_copy.get("parcelas", [])
+
+        # Check if existing parcelas are valid debt installments (have 'parcela' ID)
+        # If they don't have 'parcela' field, they're likely payment plan data, not debt installments
+        has_valid_parcelas = existing_parcelas and all(
+            _is_valid_parcela_divida(p) for p in existing_parcelas
+        )
+
+        if has_valid_parcelas:
+            # Use existing parcelas, just add defaults
             parcelamento_copy["parcelas"] = [
-                _ensure_parcela_defaults(p) for p in parcelamento_copy["parcelas"]
+                _ensure_parcela_defaults(p) for p in existing_parcelas
+            ]
+        elif parcelas_base:
+            # Use top-level parcelas as they contain the debt installment IDs
+            parcelamento_copy["parcelas"] = [
+                _ensure_parcela_defaults(p) for p in parcelas_base
+            ]
+        else:
+            # No valid parcelas available - this will likely cause an API error
+            parcelamento_copy["parcelas"] = [
+                _ensure_parcela_defaults(p) for p in existing_parcelas
             ]
 
         processed.append(parcelamento_copy)

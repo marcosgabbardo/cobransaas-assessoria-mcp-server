@@ -146,15 +146,60 @@ DOCUMENTATION = """
 - `parcelas`: Lista de parcelas com `valorDesconto`
 - `parcelamento`: Objeto com datas e valores (campos `descontoDivida` e `descontoTarifa` são obrigatórios)
 
-## 5. Propostas vs Acordos
+## 5. Propostas vs Acordos - CONCEITOS DISTINTOS
 
-**Acordo**: Negociação única com um plano de pagamento definido.
+> **CRÍTICO**: Proposta e Acordo são conceitos DIFERENTES. NÃO tente criar múltiplos
+> acordos quando uma proposta falha. Uma proposta com 3 opções NÃO é igual a 3 acordos.
 
-**Proposta**: Encapsula MÚLTIPLAS opções de pagamento para o cliente escolher.
-- Exemplo: Oferecer ao cliente 3 opções: 1+1, 1+3 e 1+6 parcelas
-- Use `simulate_agreement` para gerar as opções
-- Use `execute_proposal` para criar a proposta com todas as opções
-- Quando o cliente escolher uma opção, a proposta vira acordo
+### Acordo (`execute_agreement`)
+- **O que é**: Negociação ÚNICA com um plano de pagamento DEFINIDO
+- **Quando usar**: Quando o cliente JÁ ESCOLHEU como vai pagar
+- **Estrutura**:
+  - `parcelas`: Lista de parcelas da DÍVIDA (no nível superior)
+  - `parcelamento`: Objeto ÚNICO com o plano de pagamento escolhido
+- **Resultado**: Cria UM acordo com UM plano de pagamento
+
+### Proposta (`execute_proposal`)
+- **O que é**: Oferta com MÚLTIPLAS opções de pagamento para o cliente ESCOLHER
+- **Quando usar**: Quando queremos oferecer várias opções (ex: à vista, 3x, 6x)
+- **Estrutura**:
+  - `parcelamentos`: Lista de VÁRIAS opções de parcelamento
+  - Cada parcelamento DEVE conter sua própria lista `parcelas` (parcelas da dívida)
+- **Resultado**: Cria UMA proposta com várias opções
+
+### Estrutura das Parcelas - ATENÇÃO!
+
+As `parcelas` dentro de cada `parcelamento` devem ser as **PARCELAS DA DÍVIDA ORIGINAL**:
+```json
+{
+  "parcela": "1657178437028237381",  // ID da parcela da dívida (OBRIGATÓRIO)
+  "valorDesconto": 0,
+  "descontoMora": 0,
+  "descontoJuros": 0,
+  "descontoMulta": 0,
+  "descontoOutros": 0
+}
+```
+
+**NÃO** são as parcelas do plano de pagamento (essas têm `numeroParcela`, `valorJuros`, etc).
+
+### Fluxo Correto para Proposta
+
+1. `simulate_agreement` → Obtém opções de parcelamento
+2. Monte os `parcelamentos` (cada um com suas `parcelas` da dívida)
+3. `execute_proposal` com:
+   - `cliente`: ID do cliente
+   - `negociacao`: ID da modalidade
+   - `meio_pagamento`: ID do meio de pagamento
+   - `data_vigencia`: Data de validade (YYYY-MM-DD)
+   - `parcelamentos`: Lista de opções, cada uma com `parcelas` (parcelas da dívida)
+
+### O que fazer quando a proposta falha?
+
+1. **NÃO** tente criar múltiplos acordos - isso é conceitualmente errado
+2. Verifique os campos obrigatórios: `cliente`, `negociacao`, `meio_pagamento`, `data_vigencia`
+3. Verifique se cada `parcelamento` tem `parcelas` com o campo `parcela` (ID da dívida)
+4. Verifique se os campos de desconto não são `null` (devem ser `0` se não houver desconto)
 
 ## 6. Tabulações (Histórico de Contatos)
 
@@ -667,7 +712,17 @@ TOOLS = [
     ),
     Tool(
         name="execute_proposal",
-        description="Efetiva uma proposta de acordo. Cada parcelamento deve conter sua própria lista 'parcelas', ou você pode fornecer uma lista 'parcelas' no nível superior.",
+        description="""Cria UMA proposta com MÚLTIPLAS opções de pagamento para o cliente escolher.
+
+IMPORTANTE: Proposta ≠ Acordo!
+- Proposta: oferece várias opções (ex: à vista, 3x, 6x) em uma única proposta
+- Acordo: cria um plano de pagamento específico já escolhido
+
+NÃO use esta ferramenta quando a proposta falhar para tentar criar múltiplos acordos.
+Se a proposta falhar, corrija os parâmetros e tente novamente.
+
+Cada parcelamento deve conter 'parcelas' que são as PARCELAS DA DÍVIDA (com campo 'parcela' = ID),
+NÃO as parcelas do plano de pagamento (que têm 'numeroParcela', 'valorJuros', etc).""",
         inputSchema={
             "type": "object",
             "properties": {
@@ -678,12 +733,12 @@ TOOLS = [
                 "parcelamentos": {
                     "type": "array",
                     "items": {"type": "object"},
-                    "description": "Lista de opções de parcelamento. Cada parcelamento deve conter: parcelas (lista com parcela ID e descontos), numeroParcelas, valorEntrada, dataEmissao, dataVencimento, etc.",
+                    "description": "Lista de opções de parcelamento. CADA parcelamento deve conter 'parcelas' com as parcelas da DÍVIDA (campo 'parcela' com ID obrigatório).",
                 },
                 "parcelas": {
                     "type": "array",
                     "items": {"type": "object"},
-                    "description": "Lista opcional de parcelas no nível superior (usada se os parcelamentos não tiverem suas próprias parcelas). Cada parcela deve ter: parcela (ID), valorDesconto, descontoMora, descontoJuros, descontoMulta, descontoOutros",
+                    "description": "Lista de parcelas da DÍVIDA (fallback se parcelamentos não tiverem). Cada parcela: parcela (ID obrigatório!), valorDesconto, descontoMora, descontoJuros, descontoMulta, descontoOutros.",
                 },
             },
             "required": ["cliente", "negociacao", "meio_pagamento", "data_vigencia", "parcelamentos"],
