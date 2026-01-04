@@ -21,12 +21,11 @@ Este servidor permite que assistentes de IA interajam com o sistema CobranSaaS a
 - **Propostas**: Efetivar propostas de acordo
 - **Comissões**: Consultar comissões geradas
 - **Liquidação**: Liquidar e estornar parcelas de acordos
-- **Boletos de Acordo**: Obter e registrar boletos de parcelas de acordos
+- **Boletos de Acordo**: Obter dados (linha digitável, código de barras), PDF e registrar boletos de parcelas de acordos
 
 ### Boletos
 - **Listar**: Listar boletos com filtros diversos
 - **Detalhes**: Obter detalhes e PDF de boletos
-- **Registro**: Registrar boletos individual ou em lote
 
 ### PIX
 - **QR Code**: Obter imagem do QR Code PIX
@@ -125,7 +124,7 @@ Adicione ao arquivo `.vscode/mcp.json`:
 }
 ```
 
-## Tools Disponíveis (43 tools)
+## Tools Disponíveis (42 tools)
 
 ### Consulta
 
@@ -161,6 +160,7 @@ Adicione ao arquivo `.vscode/mcp.json`:
 | `conclude_agreement` | Marca acordo como concluído |
 | `get_agreement_boleto` | Obtém detalhes do boleto de parcela de acordo |
 | `get_agreement_boleto_pdf` | Obtém PDF do boleto de parcela de acordo |
+| `get_agreement_boleto_data` | Obtém dados do boleto (linha digitável, código de barras, valor, vencimento) |
 | `register_agreement_boleto` | Registra boleto de parcela de acordo |
 | `register_agreement_boletos` | Registra boletos de acordo em lote |
 | `settle_agreement_installment` | Liquida (baixa) parcela de acordo |
@@ -192,8 +192,6 @@ Adicione ao arquivo `.vscode/mcp.json`:
 | `list_boletos` | Lista boletos |
 | `get_boleto` | Obtém detalhes de um boleto |
 | `get_boleto_pdf` | Obtém PDF de um boleto |
-| `register_boleto` | Registra um boleto |
-| `register_boletos_batch` | Registra lista de boletos |
 
 ## Exemplos de Uso
 
@@ -266,7 +264,7 @@ mypy src/
 src/cobransaas_mcp/
 ├── __init__.py          # Pacote principal
 ├── __main__.py          # Entry point
-├── server.py            # MCP Server com 43 tools
+├── server.py            # MCP Server com 42 tools
 ├── config/
 │   ├── __init__.py
 │   └── settings.py      # Configurações (Pydantic Settings)
