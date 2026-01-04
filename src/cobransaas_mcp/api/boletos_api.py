@@ -73,29 +73,3 @@ async def get_boleto_pdf(boleto_id: str) -> bytes:
     """
     client = get_client()
     return await client.get_raw(f"/boletos/{boleto_id}.pdf")
-
-
-async def registrar_boleto(boleto_id: str) -> dict[str, Any]:
-    """Register a boleto.
-
-    Args:
-        boleto_id: The boleto ID.
-
-    Returns:
-        Registration result dictionary.
-    """
-    client = get_client()
-    return await client.post(f"/boletos/{boleto_id}/registrar")
-
-
-async def registrar_boletos(boleto_ids: list[str]) -> dict[str, Any]:
-    """Register multiple boletos in batch.
-
-    Args:
-        boleto_ids: List of boleto IDs.
-
-    Returns:
-        Registration result dictionary.
-    """
-    client = get_client()
-    return await client.post("/boletos/registrar", json_data={"boletos": boleto_ids})
