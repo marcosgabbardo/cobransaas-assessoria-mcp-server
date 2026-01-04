@@ -6,7 +6,11 @@ from cobransaas_mcp.api.client import get_client
 
 
 def _ensure_parcela_defaults(parcela: dict[str, Any]) -> dict[str, Any]:
-    """Ensure a parcela has all required discount fields with defaults."""
+    """Ensure a parcela has all required discount fields with defaults.
+
+    This handles both missing fields AND fields with None values.
+    """
+    result = dict(parcela)
     defaults = {
         "valorDesconto": 0,
         "descontoMora": 0,
@@ -16,17 +20,27 @@ def _ensure_parcela_defaults(parcela: dict[str, Any]) -> dict[str, Any]:
         "descontoPrincipal": 0,
         "descontoPermanencia": 0,
     }
-    return {**defaults, **parcela}
+    for key, default_value in defaults.items():
+        if key not in result or result[key] is None:
+            result[key] = default_value
+    return result
 
 
 def _ensure_parcelamento_defaults(parcelamento: dict[str, Any]) -> dict[str, Any]:
-    """Ensure a parcelamento has all required fields with defaults."""
+    """Ensure a parcelamento has all required fields with defaults.
+
+    This handles both missing fields AND fields with None values.
+    """
+    result = dict(parcelamento)
     defaults = {
         "descontoDivida": 0,
         "descontoTarifa": 0,
         "descontoTarifaParcela": 0,
     }
-    return {**defaults, **parcelamento}
+    for key, default_value in defaults.items():
+        if key not in result or result[key] is None:
+            result[key] = default_value
+    return result
 
 
 def _process_parcelamentos(
