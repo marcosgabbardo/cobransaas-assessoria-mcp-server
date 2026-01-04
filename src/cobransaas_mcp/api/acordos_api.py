@@ -152,12 +152,21 @@ async def efetivar_acordo(
         Created agreement details dictionary.
     """
     client = get_client()
+
+    # Ensure required parcelamento fields have default values if missing
+    # The simulation response may not include these required fields
+    parcelamento_with_defaults = {
+        "descontoDivida": 0,
+        "descontoTarifa": 0,
+        **parcelamento,  # User values override defaults
+    }
+
     data: dict[str, Any] = {
         "cliente": cliente,
         "negociacao": negociacao,
         "meioPagamento": meio_pagamento,
         "parcelas": parcelas,
-        "parcelamento": parcelamento,
+        "parcelamento": parcelamento_with_defaults,
     }
 
     if observacao:
