@@ -153,16 +153,20 @@ async def efetivar_acordo(
     """
     client = get_client()
 
-    # Remove 'parcelas' from parcelamento if present - the API calculates
-    # installment details automatically and rejects the request if included
-    parcelamento_clean = {k: v for k, v in parcelamento.items() if k != "parcelas"}
+    # Ensure required parcelamento fields have default values if missing
+    # The simulation response may not include these required fields
+    parcelamento_with_defaults = {
+        "descontoDivida": 0,
+        "descontoTarifa": 0,
+        **parcelamento,  # User values override defaults
+    }
 
     data: dict[str, Any] = {
         "cliente": cliente,
         "negociacao": negociacao,
         "meioPagamento": meio_pagamento,
         "parcelas": parcelas,
-        "parcelamento": parcelamento_clean,
+        "parcelamento": parcelamento_with_defaults,
     }
 
     if observacao:
