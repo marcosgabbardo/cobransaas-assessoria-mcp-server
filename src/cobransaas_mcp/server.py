@@ -43,6 +43,7 @@ from cobransaas_mcp.api import (
     concluir_acordo,
     get_acordo_boleto,
     get_acordo_boleto_pdf,
+    get_acordo_boleto_dados,
     registrar_acordo_boleto,
     registrar_acordo_boletos,
     liquidar_parcela_acordo,
@@ -64,8 +65,6 @@ from cobransaas_mcp.api import (
     list_boletos,
     get_boleto,
     get_boleto_pdf,
-    registrar_boleto,
-    registrar_boletos,
 )
 
 # Create server instance
@@ -473,6 +472,17 @@ TOOLS = [
         },
     ),
     Tool(
+        name="get_agreement_boleto_data",
+        description="Obtém os dados do boleto de uma parcela de acordo, incluindo linha digitável, código de barras, valor, vencimento e situação.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "parcela_id": {"type": "string", "description": "ID da parcela do acordo"},
+            },
+            "required": ["parcela_id"],
+        },
+    ),
+    Tool(
         name="register_agreement_boleto",
         description="Registra o boleto de uma parcela de acordo.",
         inputSchema={
@@ -715,32 +725,6 @@ TOOLS = [
             "required": ["id"],
         },
     ),
-    Tool(
-        name="register_boleto",
-        description="Registra um boleto.",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "id": {"type": "string", "description": "ID do boleto"},
-            },
-            "required": ["id"],
-        },
-    ),
-    Tool(
-        name="register_boletos_batch",
-        description="Registra uma lista de boletos.",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "ids": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Lista de IDs de boletos",
-                },
-            },
-            "required": ["ids"],
-        },
-    ),
 ]
 
 
@@ -911,6 +895,8 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
                     text=f"PDF do boleto (base64): {base64.b64encode(pdf_bytes).decode('utf-8')}",
                 )
             ]
+        elif name == "get_agreement_boleto_data":
+            result = await get_acordo_boleto_dados(arguments["parcela_id"])
         elif name == "register_agreement_boleto":
             result = await registrar_acordo_boleto(
                 acordo_id=arguments["acordo_id"],
@@ -1017,10 +1003,6 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
                     text=f"PDF do boleto (base64): {base64.b64encode(pdf_bytes).decode('utf-8')}",
                 )
             ]
-        elif name == "register_boleto":
-            result = await registrar_boleto(arguments["id"])
-        elif name == "register_boletos_batch":
-            result = await registrar_boletos(arguments["ids"])
 
         else:
             return [TextContent(type="text", text=f"Tool '{name}' not found.")]

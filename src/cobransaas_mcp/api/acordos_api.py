@@ -307,6 +307,20 @@ async def registrar_acordo_boletos(
     return await client.post(f"/acordos/{acordo_id}/boletos/registrar", json_data=data if data else None)
 
 
+async def get_acordo_boleto_dados(parcela_id: str) -> dict[str, Any]:
+    """Get boleto data for an agreement installment (linha digitável, código de barras, etc.).
+
+    Args:
+        parcela_id: The agreement installment ID (parcela do acordo).
+
+    Returns:
+        Boleto data dictionary with linhaDigitavel, codigoBarras, valorBoleto,
+        dataVencimento, situacao, and other boleto details.
+    """
+    client = get_client()
+    return await client.get(f"/acordos/boletos/{parcela_id}")
+
+
 async def liquidar_parcela_acordo(
     parcela_id: str,
     data_liquidacao: str,
