@@ -667,26 +667,21 @@ TOOLS = [
     ),
     Tool(
         name="execute_proposal",
-        description="Efetiva uma proposta de acordo.",
+        description="Efetiva uma proposta de acordo. Diferente de acordos, cada parcelamento deve conter sua própria lista de parcelas.",
         inputSchema={
             "type": "object",
             "properties": {
                 "cliente": {"type": "string", "description": "ID do cliente"},
                 "negociacao": {"type": "string", "description": "ID da modalidade de negociação"},
                 "meio_pagamento": {"type": "string", "description": "ID do meio de pagamento"},
-                "data_vigencia": {"type": "string", "description": "Data limite de vigência da proposta"},
-                "parcelas": {
-                    "type": "array",
-                    "items": {"type": "object"},
-                    "description": "Lista de parcelas com valores de desconto",
-                },
+                "data_vigencia": {"type": "string", "description": "Data limite de vigência da proposta (YYYY-MM-DD)"},
                 "parcelamentos": {
                     "type": "array",
                     "items": {"type": "object"},
-                    "description": "Lista de opções de parcelamento",
+                    "description": "Lista de opções de parcelamento. IMPORTANTE: Cada parcelamento deve conter sua própria lista 'parcelas' com os campos: parcela (ID), valorDesconto, descontoMora, descontoJuros, descontoMulta, descontoOutros",
                 },
             },
-            "required": ["cliente", "negociacao", "meio_pagamento", "data_vigencia", "parcelas", "parcelamentos"],
+            "required": ["cliente", "negociacao", "meio_pagamento", "data_vigencia", "parcelamentos"],
         },
     ),
     # ==========================================================================
@@ -1066,7 +1061,6 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
                 negociacao=arguments["negociacao"],
                 meio_pagamento=arguments["meio_pagamento"],
                 data_vigencia=arguments["data_vigencia"],
-                parcelas=arguments["parcelas"],
                 parcelamentos=arguments["parcelamentos"],
             )
 
