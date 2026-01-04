@@ -120,7 +120,7 @@ TOOLS = [
     ),
     Tool(
         name="list_batch_records",
-        description="Lista os registros (dívidas) de um lote específico.",
+        description="Lista os registros (dívidas) de um lote específico com paginação. Retorna os dados, indicador de próxima página e token de continuação.",
         inputSchema={
             "type": "object",
             "properties": {
@@ -128,6 +128,14 @@ TOOLS = [
                 "selector": {
                     "type": "string",
                     "description": "Dados adicionais a incluir (telefones, emails, enderecos, referencias, participantes, informacoesAdicionais, marcadores, parcelamentos)",
+                },
+                "size": {
+                    "type": "integer",
+                    "description": "Quantidade de registros por página (padrão: 10)",
+                },
+                "continuable": {
+                    "type": "string",
+                    "description": "Token de continuação para buscar a próxima página (obtido da resposta anterior)",
                 },
             },
             "required": ["id"],
@@ -757,6 +765,8 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
             result = await list_lote_registros(
                 lote_id=arguments["id"],
                 selector=arguments.get("selector"),
+                size=arguments.get("size", 10),
+                continuable=arguments.get("continuable"),
             )
         elif name == "list_batch_records_delta":
             result = await list_registros_delta(

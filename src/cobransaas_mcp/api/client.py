@@ -227,6 +227,42 @@ class CobranSaaSClient:
 
         return all_results
 
+    async def get_page(
+        self,
+        endpoint: str,
+        params: dict[str, Any] | None = None,
+        size: int = 10,
+        continuable: str | None = None,
+    ) -> dict[str, Any]:
+        """Make single page GET request with CONTINUABLE pagination.
+
+        Args:
+            endpoint: API endpoint.
+            params: Query parameters.
+            size: Page size (default 10).
+            continuable: Continuation token from previous page.
+
+        Returns:
+            Dictionary with 'data', 'has_next', and 'continuable' keys.
+        """
+        if params is None:
+            params = {}
+
+        params["mode"] = "CONTINUABLE"
+        params["size"] = size
+        if continuable:
+            params["continuable"] = continuable
+
+        response = await self._request("GET", endpoint, params=params)
+        data = response.json()
+
+        return {
+            "data": data,
+            "has_next": response.headers.get("x-meta-has-next", "false").lower() == "true",
+            "continuable": response.headers.get("x-meta-continuable"),
+            "current_size": response.headers.get("x-meta-current-size"),
+        }
+
 
 # Global client instance
 _client: CobranSaaSClient | None = None
