@@ -667,7 +667,7 @@ TOOLS = [
     ),
     Tool(
         name="execute_proposal",
-        description="Efetiva uma proposta de acordo. Diferente de acordos, cada parcelamento deve conter sua própria lista de parcelas.",
+        description="Efetiva uma proposta de acordo. Cada parcelamento deve conter sua própria lista 'parcelas', ou você pode fornecer uma lista 'parcelas' no nível superior.",
         inputSchema={
             "type": "object",
             "properties": {
@@ -678,7 +678,12 @@ TOOLS = [
                 "parcelamentos": {
                     "type": "array",
                     "items": {"type": "object"},
-                    "description": "Lista de opções de parcelamento. IMPORTANTE: Cada parcelamento deve conter sua própria lista 'parcelas' com os campos: parcela (ID), valorDesconto, descontoMora, descontoJuros, descontoMulta, descontoOutros",
+                    "description": "Lista de opções de parcelamento. Cada parcelamento deve conter: parcelas (lista com parcela ID e descontos), numeroParcelas, valorEntrada, dataEmissao, dataVencimento, etc.",
+                },
+                "parcelas": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Lista opcional de parcelas no nível superior (usada se os parcelamentos não tiverem suas próprias parcelas). Cada parcela deve ter: parcela (ID), valorDesconto, descontoMora, descontoJuros, descontoMulta, descontoOutros",
                 },
             },
             "required": ["cliente", "negociacao", "meio_pagamento", "data_vigencia", "parcelamentos"],
@@ -1062,6 +1067,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
                 meio_pagamento=arguments["meio_pagamento"],
                 data_vigencia=arguments["data_vigencia"],
                 parcelamentos=arguments["parcelamentos"],
+                parcelas=arguments.get("parcelas"),
             )
 
         # ======================================================================

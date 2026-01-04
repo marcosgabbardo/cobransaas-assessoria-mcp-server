@@ -19,18 +19,43 @@ def _ensure_parcela_defaults(parcela: dict[str, Any]) -> dict[str, Any]:
     return {**defaults, **parcela}
 
 
-def _process_parcelamentos(parcelamentos: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Process parcelamentos to ensure each parcela has required fields.
+def _ensure_parcelamento_defaults(parcelamento: dict[str, Any]) -> dict[str, Any]:
+    """Ensure a parcelamento has all required fields with defaults."""
+    defaults = {
+        "descontoDivida": 0,
+        "descontoTarifa": 0,
+        "descontoTarifaParcela": 0,
+    }
+    return {**defaults, **parcelamento}
+
+
+def _process_parcelamentos(
+    parcelamentos: list[dict[str, Any]],
+    parcelas_base: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Process parcelamentos to ensure each has required fields.
 
     For proposals, each parcelamento contains its own 'parcelas' array.
     This function ensures all parcelas have the required discount fields.
+
+    Args:
+        parcelamentos: List of parcelamento options.
+        parcelas_base: Optional base parcelas list to use if parcelamento
+                       doesn't have its own parcelas.
     """
     processed = []
     for parcelamento in parcelamentos:
-        parcelamento_copy = dict(parcelamento)
+        # Add parcelamento-level defaults
+        parcelamento_copy = _ensure_parcelamento_defaults(dict(parcelamento))
 
-        # Process parcelas inside this parcelamento
-        if "parcelas" in parcelamento_copy and parcelamento_copy["parcelas"]:
+        # If parcelamento doesn't have parcelas but we have a base list, use it
+        if "parcelas" not in parcelamento_copy or not parcelamento_copy["parcelas"]:
+            if parcelas_base:
+                parcelamento_copy["parcelas"] = [
+                    _ensure_parcela_defaults(p) for p in parcelas_base
+                ]
+        else:
+            # Process existing parcelas to add defaults
             parcelamento_copy["parcelas"] = [
                 _ensure_parcela_defaults(p) for p in parcelamento_copy["parcelas"]
             ]
@@ -46,29 +71,33 @@ async def efetivar_proposta(
     meio_pagamento: str,
     data_vigencia: str,
     parcelamentos: list[dict[str, Any]],
+    parcelas: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Execute/confirm a proposal.
 
-    For proposals, each parcelamento option must contain its own 'parcelas' array
-    with all the installments and their discount values. This is different from
-    agreements where parcelas is a top-level field.
+    For proposals, each parcelamento option should contain its own 'parcelas' array
+    with all the installments and their discount values.
+
+    Alternatively, you can provide a top-level 'parcelas' list that will be used
+    as the base for all parcelamentos that don't have their own parcelas.
 
     Args:
         cliente: Client ID.
         negociacao: Negotiation modality ID.
         meio_pagamento: Payment method ID.
         data_vigencia: Proposal validity date (YYYY-MM-DD).
-        parcelamentos: List of payment plan options. Each parcelamento must contain:
+        parcelamentos: List of payment plan options. Each parcelamento should contain:
             - parcelas: List of installments, each with 'parcela' (ID) and discount fields
             - Other parcelamento fields from simulation (valorTotal, numeroParcelas, etc.)
+        parcelas: Optional top-level parcelas list (used if parcelamentos don't have their own).
 
     Returns:
         Created proposal details dictionary.
     """
     client = get_client()
 
-    # Process parcelamentos to add default values to parcelas
-    processed_parcelamentos = _process_parcelamentos(parcelamentos)
+    # Process parcelamentos to add default values
+    processed_parcelamentos = _process_parcelamentos(parcelamentos, parcelas)
 
     data: dict[str, Any] = {
         "cliente": cliente,
