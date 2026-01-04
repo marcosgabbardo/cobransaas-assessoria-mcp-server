@@ -30,7 +30,7 @@ from cobransaas_mcp.api.acordos_api import (
     liquidar_parcela_acordo,
     estornar_parcela_acordo,
 )
-from cobransaas_mcp.api.propostas_api import efetivar_proposta
+from cobransaas_mcp.api.propostas_api import efetivar_proposta, PropostaValidationError
 from cobransaas_mcp.api.comissoes_api import list_comissoes
 from cobransaas_mcp.api.tabulacoes_api import list_tabulacoes, criar_tabulacao
 from cobransaas_mcp.api.pix_api import (
@@ -90,6 +90,7 @@ __all__ = [
     "estornar_parcela_acordo",
     # Propostas
     "efetivar_proposta",
+    "PropostaValidationError",
     # Comissoes
     "list_comissoes",
     # Tabulacoes

@@ -57,6 +57,12 @@ def _is_valid_parcela_divida(parcela: dict[str, Any]) -> bool:
     return "parcela" in parcela and parcela["parcela"] is not None
 
 
+class PropostaValidationError(Exception):
+    """Raised when proposal data is invalid."""
+
+    pass
+
+
 def _process_parcelamentos(
     parcelamentos: list[dict[str, Any]],
     parcelas_base: list[dict[str, Any]] | None = None,
@@ -73,9 +79,12 @@ def _process_parcelamentos(
     Args:
         parcelamentos: List of parcelamento options.
         parcelas_base: Top-level parcelas list with debt installments.
+
+    Raises:
+        PropostaValidationError: If parcelas are invalid and no parcelas_base provided.
     """
     processed = []
-    for parcelamento in parcelamentos:
+    for i, parcelamento in enumerate(parcelamentos):
         # Add parcelamento-level defaults
         parcelamento_copy = _ensure_parcelamento_defaults(dict(parcelamento))
 
@@ -98,10 +107,27 @@ def _process_parcelamentos(
                 _ensure_parcela_defaults(p) for p in parcelas_base
             ]
         else:
-            # No valid parcelas available - this will likely cause an API error
-            parcelamento_copy["parcelas"] = [
-                _ensure_parcela_defaults(p) for p in existing_parcelas
-            ]
+            # CRITICAL ERROR: parcelas inside parcelamentos have wrong structure
+            # and no parcelas_base was provided
+            wrong_fields = []
+            if existing_parcelas:
+                sample = existing_parcelas[0]
+                if "numeroParcela" in sample:
+                    wrong_fields.append("numeroParcela")
+                if "valorJuros" in sample and "parcela" not in sample:
+                    wrong_fields.append("valorJuros")
+                if "parcela" not in sample:
+                    wrong_fields.append("MISSING: parcela (ID)")
+
+            raise PropostaValidationError(
+                f"ERRO: parcelamentos[{i}].parcelas contém dados do PLANO DE PAGAMENTO, "
+                f"não das PARCELAS DA DÍVIDA. "
+                f"Campos errados detectados: {wrong_fields}. "
+                f"SOLUÇÃO: Você DEVE passar o parâmetro 'parcelas' (top-level) com as parcelas "
+                f"da dívida do resultado da simulação. As parcelas da dívida têm o campo 'parcela' "
+                f"(ID da parcela) - são as que vêm no nível superior da resposta do simulate_agreement. "
+                f"NÃO use as parcelas de dentro dos parcelamentos - essas são do plano de pagamento."
+            )
 
         processed.append(parcelamento_copy)
 

@@ -714,15 +714,20 @@ TOOLS = [
         name="execute_proposal",
         description="""Cria UMA proposta com MÚLTIPLAS opções de pagamento para o cliente escolher.
 
-IMPORTANTE: Proposta ≠ Acordo!
-- Proposta: oferece várias opções (ex: à vista, 3x, 6x) em uma única proposta
-- Acordo: cria um plano de pagamento específico já escolhido
+⚠️ CRÍTICO - LEIA COM ATENÇÃO:
 
-NÃO use esta ferramenta quando a proposta falhar para tentar criar múltiplos acordos.
-Se a proposta falhar, corrija os parâmetros e tente novamente.
+1. PROPOSTA ≠ ACORDO - São conceitos DIFERENTES!
+   - Proposta: UMA proposta com várias opções (ex: à vista, 3x, 6x)
+   - Acordo: UM plano de pagamento específico já escolhido
+   - Se a proposta FALHAR, NÃO crie múltiplos acordos - corrija os parâmetros!
 
-Cada parcelamento deve conter 'parcelas' que são as PARCELAS DA DÍVIDA (com campo 'parcela' = ID),
-NÃO as parcelas do plano de pagamento (que têm 'numeroParcela', 'valorJuros', etc).""",
+2. O parâmetro 'parcelas' (top-level) é OBRIGATÓRIO na prática!
+   - Use as 'parcelas' do NÍVEL SUPERIOR da resposta do simulate_agreement
+   - Essas têm o campo 'parcela' com o ID da parcela da dívida
+   - NÃO use as 'parcelas' de DENTRO dos parcelamentos - essas são do plano de pagamento
+
+3. As 'parcelas' de dentro de 'parcelamentos' na simulação têm 'numeroParcela' (ERRADO!)
+   A API precisa de 'parcela' (ID da dívida) - passe o parâmetro 'parcelas' top-level!""",
         inputSchema={
             "type": "object",
             "properties": {
@@ -733,15 +738,15 @@ NÃO as parcelas do plano de pagamento (que têm 'numeroParcela', 'valorJuros', 
                 "parcelamentos": {
                     "type": "array",
                     "items": {"type": "object"},
-                    "description": "Lista de opções de parcelamento. CADA parcelamento deve conter 'parcelas' com as parcelas da DÍVIDA (campo 'parcela' com ID obrigatório).",
+                    "description": "Lista de opções de parcelamento da simulação. ATENÇÃO: as 'parcelas' dentro desses objetos serão IGNORADAS e substituídas pelas 'parcelas' do parâmetro abaixo.",
                 },
                 "parcelas": {
                     "type": "array",
                     "items": {"type": "object"},
-                    "description": "Lista de parcelas da DÍVIDA (fallback se parcelamentos não tiverem). Cada parcela: parcela (ID obrigatório!), valorDesconto, descontoMora, descontoJuros, descontoMulta, descontoOutros.",
+                    "description": "⚠️ OBRIGATÓRIO! Use as 'parcelas' do NÍVEL SUPERIOR da simulação (têm campo 'parcela' com ID). Cada objeto: {parcela: 'ID', valorDesconto: 0, descontoMora: 0, descontoJuros: 0, descontoMulta: 0, descontoOutros: 0}",
                 },
             },
-            "required": ["cliente", "negociacao", "meio_pagamento", "data_vigencia", "parcelamentos"],
+            "required": ["cliente", "negociacao", "meio_pagamento", "data_vigencia", "parcelamentos", "parcelas"],
         },
     ),
     # ==========================================================================
