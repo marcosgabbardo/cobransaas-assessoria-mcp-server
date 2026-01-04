@@ -7,7 +7,8 @@ from typing import Any
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent, ImageContent
+from mcp.types import Tool, TextContent, ImageContent, Resource
+from pydantic import AnyUrl
 
 from cobransaas_mcp.api import (
     close_client,
@@ -69,6 +70,121 @@ from cobransaas_mcp.api import (
 
 # Create server instance
 server = Server("cobransaas-mcp")
+
+
+# ============================================================================
+# API Documentation Resource
+# ============================================================================
+
+DOCUMENTATION = """
+# Guia de Uso da API CobranSaaS para Assessorias
+
+> **IMPORTANTE**: Este guia apresenta os **fluxos básicos e mais utilizados** para cada operação.
+> Estes NÃO são os únicos fluxos possíveis - a API permite variações e combinações
+> diferentes para alcançar os mesmos resultados. Use este guia como referência inicial,
+> mas esteja ciente de que existem alternativas dependendo do caso de uso específico.
+
+## 1. Dados de Boleto/PIX de Acordos
+
+**FLUXO CORRETO**: Para obter linha digitável, código de barras, QR Code PIX:
+
+1. Use `get_agreement` com `selector=parcelas`
+2. Na resposta, dentro de cada parcela do acordo existem 3 listas:
+   - `boletos`: Lista de boletos com linhaDigitavel, codigoBarras, valor, vencimento
+   - `pix`: Lista de PIX com QR Code, chave PIX, valor
+   - `linksPagamento`: Links de pagamento alternativos
+
+**NÃO** existe endpoint separado para buscar boleto - os dados vêm JUNTO com as parcelas do acordo.
+
+**Exemplo de fluxo**:
+```
+1. get_agreement(id="123", selector="parcelas")
+2. Resposta contém: acordo.parcelas[0].boletos[0].linhaDigitavel
+```
+
+## 2. Situações de Acordos/Renegociações/Pagamentos Avulsos
+
+| Situação | Descrição | Tem Saldo? |
+|----------|-----------|------------|
+| PENDENTE | Acordo efetivado, aguardando ativação | Sim |
+| ABERTO | Acordo ativo, sem pagamentos | Sim |
+| PARCIAL | Acordo com pagamentos parciais | Sim |
+| LIQUIDADO | Acordo totalmente pago | Não |
+| CANCELADO | Acordo cancelado | Não |
+| NAO_CUMPRIDO | Acordo não cumprido (inadimplente) | Não |
+| BLOQUEADO | Aguardando aprovação | - |
+| PROPOSTA | É uma proposta, não acordo efetivado | - |
+| RENEGOCIADO | Substituído por nova negociação | Não |
+| INTEGRADO | Marcado como integrado no sistema | - |
+| CONCLUIDO | Marcado como concluído | Não |
+
+**Resumo prático**:
+- Para buscar acordos com saldo a pagar: situação `ABERTO` ou `PARCIAL`
+- Acordos já pagos: situação `LIQUIDADO`
+- Acordos problemáticos: situação `CANCELADO` ou `NAO_CUMPRIDO`
+
+## 3. Fluxo de Busca de Lotes
+
+**Sempre seguir este fluxo**:
+1. `list_batches` com `situacao=ATIVO` → Obtém o lote mais recente
+2. `get_batch` → Verifica data de processamento e totais
+3. `list_batch_records` com `size=10` → Busca registros paginados
+4. Use o `continuable` retornado para buscar próximas páginas
+
+## 4. Fluxo Principal: Criar Acordo
+
+**Fluxo típico de negociação**:
+1. `list_negotiation_types` → Lista modalidades disponíveis para o cliente
+2. `simulate_agreement` → Simula o acordo com as opções escolhidas
+3. `execute_agreement` → Efetiva o acordo
+4. `get_agreement` com `selector=parcelas` → Obtém dados de pagamento (boleto/PIX)
+
+**Parâmetros obrigatórios para efetivar**:
+- `cliente`: ID do cliente
+- `negociacao`: ID da modalidade
+- `meio_pagamento`: ID do meio de pagamento
+- `parcelas`: Lista de parcelas com `valorDesconto`
+- `parcelamento`: Objeto com datas e valores (campos `descontoDivida` e `descontoTarifa` são obrigatórios)
+
+## 5. Propostas vs Acordos
+
+**Acordo**: Negociação única com um plano de pagamento definido.
+
+**Proposta**: Encapsula MÚLTIPLAS opções de pagamento para o cliente escolher.
+- Exemplo: Oferecer ao cliente 3 opções: 1+1, 1+3 e 1+6 parcelas
+- Use `simulate_agreement` para gerar as opções
+- Use `execute_proposal` para criar a proposta com todas as opções
+- Quando o cliente escolher uma opção, a proposta vira acordo
+
+## 6. Tabulações (Histórico de Contatos)
+
+Use `create_tabulation` para registrar cada contato com o cliente:
+- Ligações realizadas
+- Promessas de pagamento
+- Negociações em andamento
+- Observações importantes
+
+## 7. Dicas de Uso
+
+1. **Sempre use `selector`** quando precisar de dados relacionados:
+   - `selector=parcelas` para ver parcelas de acordos
+   - `selector=telefones,emails` para dados de contato de clientes
+
+2. **Paginação**: Use `size` e `continuable` para controlar volume de dados
+
+3. **Filtros de data**: Use `data_inicio` e `data_fim` para limitar períodos
+
+4. **Verificar situação**: Sempre verifique a situação do acordo antes de operações
+"""
+
+RESOURCES = [
+    Resource(
+        uri="resource://api-guide",
+        name="Guia da API CobranSaaS",
+        description="Documentação completa sobre como usar a API CobranSaaS para assessorias. Consulte este guia para entender fluxos, situações de acordos e melhores práticas.",
+        mimeType="text/markdown",
+    ),
+]
 
 
 def _format_response(data: Any) -> str:
@@ -740,6 +856,20 @@ TOOLS = [
 async def list_tools() -> list[Tool]:
     """List available tools."""
     return TOOLS
+
+
+@server.list_resources()
+async def list_resources() -> list[Resource]:
+    """List available documentation resources."""
+    return RESOURCES
+
+
+@server.read_resource()
+async def read_resource(uri: AnyUrl) -> str:
+    """Read a documentation resource."""
+    if str(uri) == "resource://api-guide":
+        return DOCUMENTATION
+    raise ValueError(f"Resource not found: {uri}")
 
 
 @server.call_tool()
