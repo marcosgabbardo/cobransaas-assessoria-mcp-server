@@ -250,7 +250,7 @@ async def get_acordo_boleto(
         Boleto details dictionary.
     """
     client = get_client()
-    return await client.get(f"/acordos/{acordo_id}/boletos/{parcela}")
+    return await client.get(f"/acordos/{acordo_id}/{parcela}/boleto")
 
 
 async def get_acordo_boleto_pdf(
@@ -267,7 +267,7 @@ async def get_acordo_boleto_pdf(
         PDF file bytes.
     """
     client = get_client()
-    return await client.get_raw(f"/acordos/{acordo_id}/boletos/{parcela}.pdf")
+    return await client.get_raw(f"/acordos/{acordo_id}/{parcela}/boleto.pdf")
 
 
 async def registrar_acordo_boleto(
@@ -284,7 +284,7 @@ async def registrar_acordo_boleto(
         Registration result dictionary.
     """
     client = get_client()
-    return await client.post(f"/acordos/{acordo_id}/boletos/{parcela}/registrar")
+    return await client.post(f"/acordos/{acordo_id}/{parcela}/boleto/registrar")
 
 
 async def registrar_acordo_boletos(
