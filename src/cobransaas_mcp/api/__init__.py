@@ -24,6 +24,7 @@ from cobransaas_mcp.api.acordos_api import (
     concluir_acordo,
     get_acordo_boleto,
     get_acordo_boleto_pdf,
+    get_acordo_boleto_dados,
     registrar_acordo_boleto,
     registrar_acordo_boletos,
     liquidar_parcela_acordo,
@@ -43,8 +44,6 @@ from cobransaas_mcp.api.boletos_api import (
     list_boletos,
     get_boleto,
     get_boleto_pdf,
-    registrar_boleto,
-    registrar_boletos,
 )
 
 __all__ = [
@@ -84,6 +83,7 @@ __all__ = [
     "concluir_acordo",
     "get_acordo_boleto",
     "get_acordo_boleto_pdf",
+    "get_acordo_boleto_dados",
     "registrar_acordo_boleto",
     "registrar_acordo_boletos",
     "liquidar_parcela_acordo",
@@ -105,6 +105,4 @@ __all__ = [
     "list_boletos",
     "get_boleto",
     "get_boleto_pdf",
-    "registrar_boleto",
-    "registrar_boletos",
 ]
